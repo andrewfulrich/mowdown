@@ -5,90 +5,98 @@ var output = Babel.transform(input, { presets: ['es2015'] }).code;
 
 console.log(output)
 
+const Terser = require("terser");
+
 const fs=require('fs')
 const path = require('path');
+const zlib = require('zlib');
+const gzip = zlib.createGzip();
 
+const cheerio = require('cheerio')
 
-function getScriptTags(dom) {
-  return dom.children
-  .filter(tag=>tag.type.toLowerCase()=='script')
-  .filter(tag=>tag.name.toLowerCase()==='script')
-}
-
-function hasAttrib(attribs,tagName) {
-  return Object.keys(attribs).some(attrib=>attrib.toLowerCase()===tagName)
-}
-
-function sortScriptTags(headTags,bodyTags) {
-  const deferTags=headTags.filter(tag=>hasAttrib(tag.attribs,'defer'))
-  const headTagsWithoutDefer=headTags.filter(tag=>!hasAttrib(tag.attribs,'defer'))
-  return headTagsWithoutDefer.concat(bodyTags,deferTags)
-}
-
-function getCode(tag,basePath) {
-  function getAttrib(attribs,tagName) {
-    return attribs[Object.keys(attribs).find(attrib=>attrib.toLowerCase()===tagName)]
-  }
-  //what about cdns? return null and don't do anything with them
-  if(hasAttrib(tag.attribs,'src')) {
-    const src= getAttrib(tag.attribs,'src')
-    try {
-      return {
-        src,
-        code:fs.readFileSync(path.join(basePath,src),'utf8')
-      }
-    } catch(e) {
-      //cdns would be caught here
-      return {
-        src,
-        code:null
-      } 
-    }
-  } 
-  else if(tag.children.length > 1 && tag.children[0].data && tag.children[0].data.length > 1) {
-    //inline scripts etc. would be caught here
-    return tag.children[0].data //only returns the first child, assumes no nesting inside script tags
-  }
-  
-  return {
-    src:null,
-    code:null
-  };
-}
-
-function getSources(tags,basePath) {
-  return tags
-    .map(tag=>getCode(tag,basePath))
-    .filter(code=> code !== null)
-}
-
-function compileJS(htmlFilePath) {
-  // const emptyRegex=/<\s*script[^>]*>\s*?<\/\s*script\s*>/gims
-  
-  function replaceScriptTagsHavingSrc(srcArray,htmlString) {
-    //from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#Escaping
-    function escapeRegExp(string) {
-      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
-    }
-    const escapedURLS=srcArray.map(escapeRegExp)
-    const emptyTagRegex=new RegExp(`<\s*script[^>]*?src=['"](${escapedURLS.join('|')})['"]>\s*?<\/\s*script\s*>`,'gmis')
-    return htmlString.replace(emptyTagRegex,'')
-  }
-  function replaceScriptTagsHavingCode(htmlString) {
-    const nonEmptyTagRegex=/<\s*script[^>]*>.+?<\/\s*script\s*>/gims
-    return htmlString.replace(nonEmptyRegex,'')
+function compileJS(htmlFilePath,destinationFolder) {
+  if (!fs.existsSync(destinationFolder)){
+    fs.mkdirSync(destinationFolder);
   }
   const basePath=path.dirname(htmlFilePath)
   const htmlString=fs.readFileSync(htmlFilePath,'utf8')
 
-  const Parser = require('html-dom-parser');
-  const parsedHtml = Parser(htmlString)
-  //assumption: parsedHtml[0] is the html tag
-  const head = parsedHtml[0].children.find(tag=>tag.name.toLowerCase()=='head')
-  const body = parsedHtml[0].children.find(tag=>tag.name.toLowerCase()=='body')
+  var $ = cheerio.load(htmlString)
+  //sort the tags (put deferred in order at the bottom)
+  //extract the code from the ones whose code can be extracted (assume the rest are cdn scripts, collect them in order)
+  //take out all script tags from the html
+  //put the cdn scripts in order at the top
+  //concat the code in order, babel-ify it, minify it, and include it at the bottom
 
-  const sortedScriptTags=sortScriptTags(getScriptTags(head),getScriptTags(body))
-  const codeAndSrc=sortedScriptTags()
+  //sort the tags (put deferred in order at the bottom)
 
+  const deferredLocalOrInline=$('script[defer]').filter((index,el)=>isLocalOrInline(el,$,basePath))
+  const deferredNotLocal=$('script[defer]').filter((index,el)=>!isLocalOrInline(el,$,basePath))
+  const localOrInlineNotDeferred=$('script:not([defer])').filter((index,el)=>isLocalOrInline(el,$,basePath)) //these ones we can get code from
+  const notDeferredNotLocal=$('script:not([defer])[src]').filter((index,el)=>!isLocal(el,$,basePath)) //these are likely from a cdn, so put them at the top
+
+  //concat, babel-ify, minify local or inline code:
+  const notDeferredCode=processCode(localOrInlineNotDeferred,$,basePath)
+  const deferredCode=processCode(deferredLocalOrInline,$,basePath)
+
+  $('script').remove()
+
+  //order of insertion: notDeferredNotLocal,localOrInlineNotDeferred,deferredNotLocal,deferredLocalOrInline
+  if(notDeferredNotLocal.length > 0) {
+    notDeferredNotLocal.each((index,el)=>{
+      $('head').append(`<script src="${$(el).attr('src')}"></script>`)
+    })
+  }
+  if(notDeferredCode.length > 0) {
+    fs.writeFileSync(path.join(destinationFolder,'bundle.js'),notDeferredCode)
+    $('head').append(`<script src="bundle.js"></script>`)
+  }
+  if(deferredNotLocal.length > 0) {
+    deferredNotLocal.each((index,el)=>{
+      $('head').append(`<script defer src="${$(el).attr('src')}"></script>`)
+    })
+  }
+  if(deferredCode.length > 0) {
+    fs.writeFileSync(path.join(destinationFolder,'bundle-deferred.js'),deferredCode)
+    $('head').append(`<script defer src="bundle-deferred.js"></script>`)
+  }
+
+  return $.html()
 }
-console.log('sorted: ',sortScriptTags(scriptTagsHead,scriptTagsBody))
+
+
+function isLocal(el,$,basePath) {
+  return fs.existsSync(path.join(basePath,$(el).attr('src')))
+}
+function isLocalOrInline(el,$,basePath) {
+  return $(el).attr('src') === undefined || isLocal(el,$,basePath)
+}
+function getCode(el,$,basePath) {
+  if($(el).attr('src') !== undefined) {
+    return fs.readFileSync(path.join(basePath,$(el).attr('src')))
+  }
+  return $(el).html()
+}
+function processCode(elements,$,basePath) {
+  const scripts=[]
+  elements.each((index,el)=>scripts.push(getCode(el,$,basePath)))
+
+  return Terser.minify(
+    Babel.transform(
+      scripts.join('\n\n'), { presets: ['es2015'] }
+    ).code
+  ).code
+}
+const htmlWithJsCompiled=compileJS('./test/input/stuff.html','./dist')
+
+
+
+fs.writeFileSync('./dist/index.html',htmlWithJsCompiled)
+
+//todo: name the file the same name in dist directory
+//todo: minify css and html
+//todo: pass in options
+//todo: maybe use https://www.npmjs.com/package/recursive-copy
+//todo: gzip everything using https://www.npmjs.com/package/minizlib
+//todo: handle multiple files
+//todo: write tests

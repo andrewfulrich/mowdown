@@ -24,7 +24,6 @@
     "@babel/standalone": "^7.4.4",
     "cheerio": "^1.0.0-rc.3",
     "cssnano": "^4.1.10",
-    "html-dom-parser": "^0.2.1",
     "htmlnano": "^0.2.3",
     "terser": "^3.17.0"
   },
