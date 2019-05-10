@@ -1,0 +1,35 @@
+{
+  "name": "mowdown",
+  "version": "1.0.0",
+  "description": "Minimal production bundler for html, css, and js",
+  "main": "index.js",
+  "scripts": {
+    "test": "test",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/andrewfulrich/mowdown.git"
+  },
+  "keywords": [
+    "minify"
+  ],
+  "author": "Andrew Ulrich",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/andrewfulrich/mowdown/issues"
+  },
+  "homepage": "https://github.com/andrewfulrich/mowdown#readme",
+  "dependencies": {
+    "@babel/standalone": "^7.4.4",
+    "cheerio": "^1.0.0-rc.3",
+    "cssnano": "^4.1.10",
+    "html-dom-parser": "^0.2.1",
+    "htmlnano": "^0.2.3",
+    "terser": "^3.17.0"
+  },
+  "devDependencies": {
+    "tap-spec": "^5.0.0",
+    "tape": "^4.10.1"
+  }
+}
