@@ -22,9 +22,11 @@
   "homepage": "https://github.com/andrewfulrich/mowdown#readme",
   "dependencies": {
     "@babel/standalone": "^7.4.4",
+    "babel-preset-latest": "^6.24.1",
     "cheerio": "^1.0.0-rc.3",
-    "cssnano": "^4.1.10",
-    "htmlnano": "^0.2.3",
+    "clean-css": "^4.2.1",
+    "htmlclean": "^3.0.8",
+    "recursive-copy": "^2.0.10",
     "terser": "^3.17.0"
   },
   "devDependencies": {

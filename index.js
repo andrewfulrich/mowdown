@@ -1,102 +1,34 @@
-const Babel=require('@babel/standalone')
-
-var input = 'const getMessage = () => "Hello World";';
-var output = Babel.transform(input, { presets: ['es2015'] }).code;
-
-console.log(output)
-
-const Terser = require("terser");
-
-const fs=require('fs')
-const path = require('path');
-const zlib = require('zlib');
-const gzip = zlib.createGzip();
-
-const cheerio = require('cheerio')
-
-function compileJS(htmlFilePath,destinationFolder) {
-  if (!fs.existsSync(destinationFolder)){
-    fs.mkdirSync(destinationFolder);
-  }
-  const basePath=path.dirname(htmlFilePath)
-  const htmlString=fs.readFileSync(htmlFilePath,'utf8')
-
-  var $ = cheerio.load(htmlString)
-  //sort the tags (put deferred in order at the bottom)
-  //extract the code from the ones whose code can be extracted (assume the rest are cdn scripts, collect them in order)
-  //take out all script tags from the html
-  //put the cdn scripts in order at the top
-  //concat the code in order, babel-ify it, minify it, and include it at the bottom
-
-  //sort the tags (put deferred in order at the bottom)
-
-  const deferredLocalOrInline=$('script[defer]').filter((index,el)=>isLocalOrInline(el,$,basePath))
-  const deferredNotLocal=$('script[defer]').filter((index,el)=>!isLocalOrInline(el,$,basePath))
-  const localOrInlineNotDeferred=$('script:not([defer])').filter((index,el)=>isLocalOrInline(el,$,basePath)) //these ones we can get code from
-  const notDeferredNotLocal=$('script:not([defer])[src]').filter((index,el)=>!isLocal(el,$,basePath)) //these are likely from a cdn, so put them at the top
-
-  //concat, babel-ify, minify local or inline code:
-  const notDeferredCode=processCode(localOrInlineNotDeferred,$,basePath)
-  const deferredCode=processCode(deferredLocalOrInline,$,basePath)
-
-  $('script').remove()
-
-  //order of insertion: notDeferredNotLocal,localOrInlineNotDeferred,deferredNotLocal,deferredLocalOrInline
-  if(notDeferredNotLocal.length > 0) {
-    notDeferredNotLocal.each((index,el)=>{
-      $('head').append(`<script src="${$(el).attr('src')}"></script>`)
-    })
-  }
-  if(notDeferredCode.length > 0) {
-    fs.writeFileSync(path.join(destinationFolder,'bundle.js'),notDeferredCode)
-    $('head').append(`<script src="bundle.js"></script>`)
-  }
-  if(deferredNotLocal.length > 0) {
-    deferredNotLocal.each((index,el)=>{
-      $('head').append(`<script defer src="${$(el).attr('src')}"></script>`)
-    })
-  }
-  if(deferredCode.length > 0) {
-    fs.writeFileSync(path.join(destinationFolder,'bundle-deferred.js'),deferredCode)
-    $('head').append(`<script defer src="bundle-deferred.js"></script>`)
-  }
-
-  return $.html()
-}
-
-
-function isLocal(el,$,basePath) {
-  return fs.existsSync(path.join(basePath,$(el).attr('src')))
-}
-function isLocalOrInline(el,$,basePath) {
-  return $(el).attr('src') === undefined || isLocal(el,$,basePath)
-}
-function getCode(el,$,basePath) {
-  if($(el).attr('src') !== undefined) {
-    return fs.readFileSync(path.join(basePath,$(el).attr('src')))
-  }
-  return $(el).html()
-}
-function processCode(elements,$,basePath) {
-  const scripts=[]
-  elements.each((index,el)=>scripts.push(getCode(el,$,basePath)))
-
-  return Terser.minify(
-    Babel.transform(
-      scripts.join('\n\n'), { presets: ['es2015'] }
-    ).code
-  ).code
-}
-const htmlWithJsCompiled=compileJS('./test/input/stuff.html','./dist')
-
-
-
-fs.writeFileSync('./dist/index.html',htmlWithJsCompiled)
-
-//todo: name the file the same name in dist directory
-//todo: minify css and html
-//todo: pass in options
-//todo: maybe use https://www.npmjs.com/package/recursive-copy
-//todo: gzip everything using https://www.npmjs.com/package/minizlib
 //todo: handle multiple files
-//todo: write tests
+
+const {compileJS}=require('./compileJS')
+const {compileCss}=require('./compileCSS')
+const fs=require('fs')
+const path=require('path')
+const htmlClean=require('htmlclean')
+const copy = require('recursive-copy')
+
+
+async function mowDown(htmlPath,destinationFolder) {
+  //concatenate, babel-ify and minify js
+  const htmlWithJsCompiled=compileJS(htmlPath,destinationFolder)
+  //concatenate and minify css
+  const htmlWithCssCompiled=compileCss(htmlWithJsCompiled.html,htmlPath,destinationFolder)
+  //minify html
+  const cleanedHtml=htmlClean(htmlWithCssCompiled.html)
+  const htmlFileName=path.basename(htmlPath)
+  fs.writeFileSync(path.join(destinationFolder,htmlFileName),cleanedHtml)
+
+  //copy everything else over just in case (helpful for things like the fontawesome folder)
+  const htmlPathFolder=path.dirname(htmlPath)
+  const excludeList=htmlWithJsCompiled.scripts
+    .concat(htmlWithCssCompiled.scripts)
+    .concat(htmlFileName)
+  console.log(`copying over to ${destinationFolder} all files except for: `,excludeList)
+  const copyOptions={
+    overwrite:true,
+    filter:testPath=>!excludeList.includes(testPath)
+  }
+  await copy(htmlPathFolder, destinationFolder, copyOptions)
+}
+
+mowDown('./test/input/stuff.html','./dist') //todo: move this to test.js and assert the things you're checking
