@@ -5,12 +5,17 @@ const fs=require('fs')
 const path = require('path');
 const cheerio = require('cheerio')
 
-
+/**
+ * 
+ * @param {*} htmlFilePath 
+ * @param {*} destinationFolder 
+ */
 function compileJS(htmlFilePath,destinationFolder) {
   if (!fs.existsSync(destinationFolder)){
     fs.mkdirSync(destinationFolder);
   }
   const basePath=path.dirname(htmlFilePath)
+  const baseName=path.basename(htmlFilePath).replace(/\.html*/,'')
   const htmlString=fs.readFileSync(htmlFilePath,'utf8')
 
   var $ = cheerio.load(htmlString)
@@ -21,7 +26,6 @@ function compileJS(htmlFilePath,destinationFolder) {
   //concat the code in order, babel-ify it, minify it, and include it at the bottom
 
   //sort the tags (put deferred in order at the bottom)
-
   const deferredLocalOrInline=$('script[defer]').filter((index,el)=>isLocalOrInline(el,$,basePath))
   const deferredNotLocal=$('script[defer]').filter((index,el)=>!isLocalOrInline(el,$,basePath))
   const localOrInlineNotDeferred=$('script:not([defer])').filter((index,el)=>isLocalOrInline(el,$,basePath)) //these ones we can get code from
@@ -41,8 +45,8 @@ function compileJS(htmlFilePath,destinationFolder) {
     })
   }
   if(notDeferredCode.length > 0) {
-    fs.writeFileSync(path.join(destinationFolder,'bundle.js'),notDeferredCode)
-    $('head').append(`<script src="bundle.js"></script>`)
+    fs.writeFileSync(path.join(destinationFolder,`bundle-${baseName}.js`),notDeferredCode)
+    $('head').append(`<script src="bundle-${baseName}.js"></script>`)
   }
   if(deferredNotLocal.length > 0) {
     deferredNotLocal.each((index,el)=>{
@@ -50,8 +54,8 @@ function compileJS(htmlFilePath,destinationFolder) {
     })
   }
   if(deferredCode.length > 0) {
-    fs.writeFileSync(path.join(destinationFolder,'bundle-deferred.js'),deferredCode)
-    $('head').append(`<script defer src="bundle-deferred.js"></script>`)
+    fs.writeFileSync(path.join(destinationFolder,`bundle-deferred-${baseName}.js`),deferredCode)
+    $('head').append(`<script defer src="bundle-deferred-${baseName}.js"></script>`)
   }
 
   return {html: $.html(),scripts:concatenatedScripts}
@@ -80,7 +84,7 @@ function processCode(elements,$,basePath) {
     ).code
   ).code
 }
-
+//todo: adds empty js files if no js file(s) are included in the html file
 module.exports={
   compileJS
 }

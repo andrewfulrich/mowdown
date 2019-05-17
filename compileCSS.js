@@ -25,7 +25,7 @@ function compileCss(htmlString,htmlFilePath,destinationFolder) {
   $('head').append(`<link rel="stylesheet" href="${outputFile}">`)
   return { html: $.html(), scripts:concatenatedScripts }
 }
-
+//todo: adds empty css file if no css script(s) are included in the html file
 module.exports={
   compileCss
 }
