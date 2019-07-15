@@ -21,7 +21,7 @@
   },
   "homepage": "https://github.com/andrewfulrich/mowdown#readme",
   "dependencies": {
-    "@babel/standalone": "^7.4.4",
+    "@babel/standalone": "^7.5.4",
     "babel-preset-latest": "^6.24.1",
     "cheerio": "^1.0.0-rc.3",
     "clean-css": "^4.2.1",
