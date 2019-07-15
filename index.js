@@ -7,11 +7,11 @@ const htmlClean=require('htmlclean')
 const copy = require('recursive-copy')
 
 
-function processSingleFile(htmlPath,destinationFolder) {
+function processSingleFile(htmlPath,destinationFolder,sourceFolder) {
   //concatenate, babel-ify and minify js
-  const htmlWithJsCompiled=compileJS(htmlPath,destinationFolder)
+  const htmlWithJsCompiled=compileJS(htmlPath,destinationFolder,sourceFolder)
   //concatenate and minify css
-  const htmlWithCssCompiled=compileCss(htmlWithJsCompiled.html,htmlPath,destinationFolder)
+  const htmlWithCssCompiled=compileCss(htmlWithJsCompiled.html,htmlPath,destinationFolder,sourceFolder)
   //minify html
   const cleanedHtml=htmlClean(htmlWithCssCompiled.html)
   const htmlFileName=path.basename(htmlPath)
@@ -19,12 +19,18 @@ function processSingleFile(htmlPath,destinationFolder) {
   return htmlWithCssCompiled.scripts.concat(htmlWithJsCompiled.scripts).concat(htmlFileName)
 }
 
-async function mowDown(htmlPaths,destinationFolder) {
+/**
+ * 
+ * @param {Array(string)} htmlPaths - the paths to the html files
+ * @param {string} destinationFolder - the path the path to the output folder
+ * @param {string} sourceFolder - (optional) the path to the basepath of the project. if not given, it is assumed to be the directory of the htmlPath(s)
+ */
+async function mowDown(htmlPaths,destinationFolder,sourceFolder) {
   const processedFiles=htmlPaths
-    .reduce((accum,htmlPath)=>accum.concat(processSingleFile(htmlPath,destinationFolder)),[])
+    .reduce((accum,htmlPath)=>accum.concat(processSingleFile(htmlPath,destinationFolder,sourceFolder)),[])
 
   //copy everything else over just in case (helpful for things like the fontawesome folder)
-  const htmlPathFolder=path.dirname(htmlPaths[0]) //todo: this currently assumes that all the given html files are in the same source folder
+  const htmlPathFolder=sourceFolder || path.dirname(htmlPaths[0]) //todo: this currently assumes that all the given html files are in the same source folder
   console.log(`copying over to ${destinationFolder} all files except for: `,processedFiles)
   const copyOptions={
     overwrite:true,
