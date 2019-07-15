@@ -38,4 +38,4 @@ async function mowDown(htmlPaths,destinationFolder,sourceFolder) {
   }
   await copy(htmlPathFolder, destinationFolder, copyOptions)
 }
-module.exports=mowdown
+module.exports=mowDown
