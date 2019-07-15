@@ -1,4 +1,6 @@
 const Babel=require('@babel/standalone')
+const preset=require('@babel/preset-env')
+Babel.registerPreset('@babel/preset-env',preset)
 
 const Terser = require("terser");
 const fs=require('fs')
@@ -83,7 +85,7 @@ function processCode(elements,$,basePath) {
 
   return Terser.minify(
     Babel.transform(
-      scripts.join('\n\n'), {presets: ['es2015','es2016','es2017']}
+      scripts.join('\n\n'), {presets: ["@babel/preset-env"]}
     ).code
   ).code
 }
