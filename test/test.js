@@ -1,5 +1,5 @@
 const test = require('tape');
-const {mowDown} = require('../index')
+const mowDown = require('../index')
 const fs = require('fs')
 const path = require('path')
 const rimraf =require('rimraf')
