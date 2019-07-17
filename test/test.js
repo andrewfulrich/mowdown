@@ -111,7 +111,7 @@ test('is compiling js to es2015',t=>{
     var ban = _objectSpread({}, foo, _defineProperty({}, baz, 'hmm'));`.replace(/\s+/g,' '),output.replace(/\s+/g,' '))
 })
 
-test('is foregoing babel compilation, excluding files, and prepending urls',t=>{
+test('is foregoing babel compilation, excluding files and folders, and prepending urls',t=>{
   t.plan(5)
   const outputFolder='./test/output'
   const expectedFolder='./test/expected/optionTests'
@@ -126,7 +126,8 @@ test('is foregoing babel compilation, excluding files, and prepending urls',t=>{
     excludeJs:['/jsScript2.js'],
     excludeCss:['/cssScript2.css'],
     prependJsUrls:['https://cdn.jsdelivr.net/npm/vue'],
-    prependCssUrls:['https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css']
+    prependCssUrls:['https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css'],
+    excludeFoldersFromCopy:['excludeFolder']
   }
   mowDown(['./test/input/optionTests/index.html'],outputFolder,options)
     .then(()=>{

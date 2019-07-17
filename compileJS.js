@@ -1,6 +1,8 @@
 const Babel=require('@babel/standalone')
 const preset=require('@babel/preset-env')
+
 Babel.registerPreset('@babel/preset-env',preset)
+Babel.registerPlugin('@babel/plugin-transform-runtime',require('@babel/plugin-transform-runtime'))
 
 const Terser = require("terser");
 const fs=require('fs')
@@ -95,7 +97,7 @@ function processCode(elements,$,basePath,isUsingBabel) {
   elements.each((index,el)=>scripts.push(getCode(el,$,basePath)))
   const code=isUsingBabel ?
     Babel.transform(
-      scripts.join('\n\n'), {presets: ["@babel/preset-env"]}
+      scripts.join('\n\n'), {presets: ["@babel/preset-env"],plugins:['@babel/plugin-transform-runtime']}
     ).code
     :
     scripts.join('\n\n');
