@@ -9,14 +9,15 @@ const cheerio = require('cheerio')
 
 /**
  * 
- * @param {*} htmlFilePath 
- * @param {*} destinationFolder 
+ * @param string htmlFilePath 
+ * @param string destinationFolder 
+ * @param object options: sourceFolder, isUsingBabel, excludeJs, prependJsUrls
  */
-function compileJS(htmlFilePath,destinationFolder,sourceFolder,isUsingBabel) {
+function compileJS(htmlFilePath,destinationFolder,options) {
   if (!fs.existsSync(destinationFolder)){
     fs.mkdirSync(destinationFolder);
   }
-  const basePath=sourceFolder || path.dirname(htmlFilePath)
+  const basePath=options.sourceFolder || path.dirname(htmlFilePath)
   const baseName=path.basename(htmlFilePath).replace(/\.html*/,'')
   const htmlString=fs.readFileSync(htmlFilePath,'utf8')
 
@@ -26,21 +27,31 @@ function compileJS(htmlFilePath,destinationFolder,sourceFolder,isUsingBabel) {
   //take out all script tags from the html
   //put the cdn scripts in order at the top
   //concat the code in order, babel-ify it, minify it, and include it at the bottom
+  function isExcluded(el) {
+    return  options.excludeJs.includes($(el).attr('src'))
+  }
 
   //sort the tags (put deferred in order at the bottom)
-  const deferredLocalOrInline=$('script[defer]').filter((index,el)=>isLocalOrInline(el,$,basePath))
-  const deferredNotLocal=$('script[defer]').filter((index,el)=>!isLocalOrInline(el,$,basePath))
-  const localOrInlineNotDeferred=$('script:not([defer])').filter((index,el)=>isLocalOrInline(el,$,basePath)) //these ones we can get code from
-  const notDeferredNotLocal=$('script:not([defer])[src]').filter((index,el)=>!isLocal(el,$,basePath)) //these are likely from a cdn, so put them at the top
+  const deferredLocalOrInline=$('script[defer]').filter((index,el)=>isLocalOrInline(el,$,basePath) && !isExcluded(el))
+  const deferredNotLocal=$('script[defer]').filter((index,el)=>!isLocalOrInline(el,$,basePath) && !isExcluded(el))
+  const localOrInlineNotDeferred=$('script:not([defer])').filter((index,el)=>isLocalOrInline(el,$,basePath) && !isExcluded(el)) //these ones we can get code from
+  const notDeferredNotLocal=$('script:not([defer])[src]').filter((index,el)=>!isLocal(el,$,basePath) && !isExcluded(el)) //these are likely from a cdn, so put them at the top
   const concatenatedScripts=[]
-  $('script[src]').each((index,el)=>concatenatedScripts.push(stripPrecedingSlash($(el).attr('src'))))
+  $('script[src]').each((index,el)=>{
+    if(!isExcluded(el)) {
+      concatenatedScripts.push(stripPrecedingSlash($(el).attr('src')))
+    }
+  })
   //concat, babel-ify, minify local or inline code:
-  const notDeferredCode=processCode(localOrInlineNotDeferred,$,basePath,isUsingBabel)
-  const deferredCode=processCode(deferredLocalOrInline,$,basePath,isUsingBabel)
+  const notDeferredCode=processCode(localOrInlineNotDeferred,$,basePath,options.isUsingBabel)
+  const deferredCode=processCode(deferredLocalOrInline,$,basePath,options.isUsingBabel)
 
   $('script').remove()
 
-  //order of insertion: notDeferredNotLocal,localOrInlineNotDeferred,deferredNotLocal,deferredLocalOrInline
+  //order of insertion: prependJsUrls, notDeferredNotLocal,localOrInlineNotDeferred,deferredNotLocal,deferredLocalOrInline
+  options.prependJsUrls.forEach(url=>{
+    $('head').append(`<script src="${url}"></script>`)
+  })
   if(notDeferredNotLocal.length > 0) {
     notDeferredNotLocal.each((index,el)=>{
       $('head').append(`<script src="${$(el).attr('src')}"></script>`)

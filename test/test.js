@@ -7,7 +7,7 @@ const rimraf =require('rimraf')
 test('end to end test', t=> {
     t.plan(12)
     const outputFolder='./test/output'
-    const expectedFolder='./test/expected'
+    const expectedFolder='./test/expected/end2end'
     try {
       rimraf.sync(outputFolder)
     } catch(e) {
@@ -46,7 +46,7 @@ test('end to end test', t=> {
 test('end to end test with sourceFolder different from html paths',t=> {
   t.plan(12)
     const outputFolder='./test/output'
-    const expectedFolder='./test/expected'
+    const expectedFolder='./test/expected/end2end'
     try {
       rimraf.sync(outputFolder)
     } catch(e) {
@@ -54,7 +54,7 @@ test('end to end test with sourceFolder different from html paths',t=> {
     }
     fs.mkdirSync(outputFolder)
 
-    mowDown(['./test/input/views/stuff.html','./test/input/views/thisToo.html'],outputFolder,'./test/input/public')
+    mowDown(['./test/input/views/stuff.html','./test/input/views/thisToo.html'],outputFolder,{sourceFolder:'./test/input/public'})
       .then(()=>{
         const filesInOutput=fs.readdirSync(outputFolder)
         const expectedFiles=fs.readdirSync(expectedFolder)
@@ -109,4 +109,39 @@ test('is compiling js to es2015',t=>{
       bat: 2
     };
     var ban = _objectSpread({}, foo, _defineProperty({}, baz, 'hmm'));`.replace(/\s+/g,' '),output.replace(/\s+/g,' '))
+})
+
+test('is foregoing babel compilation, excluding files, and prepending urls',t=>{
+  t.plan(5)
+  const outputFolder='./test/output'
+  const expectedFolder='./test/expected/optionTests'
+  try {
+    rimraf.sync(outputFolder)
+  } catch(e) {
+    //output dir DNE
+  }
+
+  const options={
+    isUsingBabel:false,
+    excludeJs:['/jsScript2.js'],
+    excludeCss:['/cssScript2.css'],
+    prependJsUrls:['https://cdn.jsdelivr.net/npm/vue'],
+    prependCssUrls:['https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css']
+  }
+  mowDown(['./test/input/optionTests/index.html'],outputFolder,options)
+    .then(()=>{
+      const filesInOutput=fs.readdirSync(outputFolder)
+      const expectedFiles=fs.readdirSync(expectedFolder)
+      t.deepEqual(filesInOutput,expectedFiles,'expected output files are all present and none other')
+
+      const outputJs=fs.readFileSync(outputFolder+'/bundle-index.js','utf8')
+      const expectedJs=fs.readFileSync(expectedFolder+'/bundle-index.js','utf8')
+      t.equal(outputJs,expectedJs,'output js should be untouched by Babel')
+
+      const outputHtml=fs.readFileSync(outputFolder+'/index.html','utf8')
+      const expectedHtml=fs.readFileSync(expectedFolder+'/index.html','utf8')
+      t.ok(outputHtml.includes(options.prependJsUrls[0]),'JS url has been inserted')
+      t.ok(outputHtml.includes(options.prependCssUrls[0]),'CSS url has been inserted')
+      t.equal(outputHtml,expectedHtml,'html produced is in fact as expected, with all scripts in order')
+    })
 })
