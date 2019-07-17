@@ -12,7 +12,7 @@ const cheerio = require('cheerio')
  * @param {*} htmlFilePath 
  * @param {*} destinationFolder 
  */
-function compileJS(htmlFilePath,destinationFolder,sourceFolder) {
+function compileJS(htmlFilePath,destinationFolder,sourceFolder,isUsingBabel) {
   if (!fs.existsSync(destinationFolder)){
     fs.mkdirSync(destinationFolder);
   }
@@ -35,8 +35,8 @@ function compileJS(htmlFilePath,destinationFolder,sourceFolder) {
   const concatenatedScripts=[]
   $('script[src]').each((index,el)=>concatenatedScripts.push(stripPrecedingSlash($(el).attr('src'))))
   //concat, babel-ify, minify local or inline code:
-  const notDeferredCode=processCode(localOrInlineNotDeferred,$,basePath)
-  const deferredCode=processCode(deferredLocalOrInline,$,basePath)
+  const notDeferredCode=processCode(localOrInlineNotDeferred,$,basePath,isUsingBabel)
+  const deferredCode=processCode(deferredLocalOrInline,$,basePath,isUsingBabel)
 
   $('script').remove()
 
@@ -48,7 +48,7 @@ function compileJS(htmlFilePath,destinationFolder,sourceFolder) {
   }
   if(notDeferredCode.length > 0) {
     fs.writeFileSync(path.join(destinationFolder,`bundle-${baseName}.js`),notDeferredCode)
-    $('head').append(`<script src="bundle-${baseName}.js"></script>`)
+    $('head').append(`<script src="/bundle-${baseName}.js"></script>`)
   }
   if(deferredNotLocal.length > 0) {
     deferredNotLocal.each((index,el)=>{
@@ -57,7 +57,7 @@ function compileJS(htmlFilePath,destinationFolder,sourceFolder) {
   }
   if(deferredCode.length > 0) {
     fs.writeFileSync(path.join(destinationFolder,`bundle-deferred-${baseName}.js`),deferredCode)
-    $('head').append(`<script defer src="bundle-deferred-${baseName}.js"></script>`)
+    $('head').append(`<script defer src="/bundle-deferred-${baseName}.js"></script>`)
   }
 
   return {html: $.html(),scripts:concatenatedScripts}
@@ -79,14 +79,17 @@ function getCode(el,$,basePath) {
   }
   return $(el).html()
 }
-function processCode(elements,$,basePath) {
+function processCode(elements,$,basePath,isUsingBabel) {
   const scripts=[]
   elements.each((index,el)=>scripts.push(getCode(el,$,basePath)))
-
-  return Terser.minify(
+  const code=isUsingBabel ?
     Babel.transform(
       scripts.join('\n\n'), {presets: ["@babel/preset-env"]}
     ).code
+    :
+    scripts.join('\n\n');
+  return Terser.minify(
+    code
   ).code
 }
 //todo: adds empty js files if no js file(s) are included in the html file

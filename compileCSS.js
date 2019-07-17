@@ -26,7 +26,7 @@ function compileCss(htmlString,htmlFilePath,destinationFolder,sourceFolder) {
   const concatenatedScripts=[]
   $('link[rel="stylesheet"]').each((index,el)=>concatenatedScripts.push(stripPrecedingSlash($(el).attr('href'))))
   $('link[rel="stylesheet"]').remove()
-  $('head').append(`<link rel="stylesheet" href="${outputFile}">`)
+  $('head').append(`<link rel="stylesheet" href="/${outputFile}">`)
   return { html: $.html(), scripts:concatenatedScripts }
 }
 //todo: adds empty css file if no css script(s) are included in the html file

@@ -14,3 +14,8 @@ or if the html files are not in the same folder as the assets they refer to, you
 const mowdown = require('mowdown')
 mowDown(arrayOfHtmlFiles,outputFolder,inputFolder)
 ```
+or if you want to skip babel
+```
+const mowdown = require('mowdown')
+mowDown(arrayOfHtmlFiles,outputFolder,inputFolder,false)
+```
