@@ -2,7 +2,7 @@ This is a super simple, standalone bundler that you don't have to run locally.
 
 It will search given html files, note all local references to css and js files (script and link tags), and will then concatenate and minify them into bundle files. For js, it will babel-ify them too.
 
-So, no need to run a builder every time you make a change and no need to worry about code splitting, just use what html already gives you for including scripts.
+So, no need to run a builder every time you make a change and no need to worry about code splitting or tree shaking, just use what html already gives you for including scripts.
 
 ## NOTICE: 
 
@@ -27,5 +27,9 @@ const defaults={
   excludeCss:[], //a list of css script link hrefs to not include in the final output
   prependJsUrls:[], //a list of script sources to prepend to the final output (for things like polyfill/libs you would locally serve for local dev but get from a cdn for prod)
   prependCssUrls:[] //a list of css url to prepend to the final output (for things you'd get from a cdn for prod but locally for local dev)
+  excludeFoldersFromCopy:[] //see the below section (better readability)
 }
 ```
+## About excludeFoldersFromCopy option
+
+By default, mowdown copies everything it didn't already touch in the sourcefolder over to the destination folder, just to make sure it got everything needed for the site to run. Use this array of folder paths to exclude folders within the sourcefolder from being copied over
