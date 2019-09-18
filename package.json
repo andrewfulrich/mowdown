@@ -25,11 +25,14 @@
     "@babel/plugin-transform-runtime": "^7.5.0",
     "@babel/preset-env": "^7.5.4",
     "@babel/runtime": "^7.5.4",
-    "@babel/standalone": "^7.5.4",
+    "axios": "^0.19.0",
+    "babel-core": "^6.26.3",
     "cheerio": "^1.0.0-rc.3",
     "clean-css": "^4.2.1",
     "htmlclean": "^3.0.8",
     "recursive-copy": "^2.0.10",
+    "request": "^2.88.0",
+    "request-promise-native": "^1.0.7",
     "terser": "^3.17.0"
   },
   "devDependencies": {

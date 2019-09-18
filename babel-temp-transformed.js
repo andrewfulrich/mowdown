@@ -1,0 +1,1 @@
+var foo=function foo(f,d){var b={a:"sdf",c:"dfd"};var a=b.a,c=b.c;var n=[1,3,5,6];var n2=[].concat(n,[7]);console.log(a,c,n2);notDefinedInThisScope()};
