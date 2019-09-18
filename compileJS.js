@@ -25,9 +25,12 @@ async function compileJs(htmlFilePath,destinationFolder,options) {
     .filter(path=>!options.excludeJs.includes(path))
 
   const codeFromPaths=getCodeFromPaths(finalPaths,inlineCode,basePath)
- 
+  nonLocalPaths.unshift('https://cdn.jsdelivr.net/npm/regenerator-runtime@0.13.3/runtime.min.js')
+  const allNonLocalPaths=nonLocalPaths.concat(Object.values(options.replaceJs))
+  console.log('nonLocalPaths are: ',nonLocalPaths)
   const transformed=await concatAndTransform(codeFromPaths)
-  const returnHtml=replaceCodeInHtml(htmlString,transformed.code,destinationFolder,baseName,nonLocalPaths)
+  console.log('baseName is:',baseName)
+  const returnHtml=replaceCodeInHtml(htmlString,transformed.code,destinationFolder,baseName,allNonLocalPaths)
   return {
     htmlString:returnHtml,
     paths:finalPaths
@@ -130,10 +133,11 @@ function replaceCodeInHtml(inputHtml,code,destinationFolder,bundlePrefix,nonLoca
   }
   var $ = cheerio.load(inputHtml)
   $('script').remove()
-  const filepath=path.join(destinationFolder,`${bundlePrefix}-bundle.js`)
+  const filename=`${bundlePrefix}-bundle.js`
+  const filepath=path.join(destinationFolder,filename)
   fs.writeFileSync(filepath,code)
-  nonLocalPaths.forEach(path=>$('head').append(`<script defer src="${path}"></script>`))
-  $('head').append(`<script defer src="bundle.js"></script>`)
+  nonLocalPaths.forEach(path=>$('head').append(`<script src="${path}"></script>`))
+  $('head').append(`<script defer src="${filename}"></script>`)
   return $.html()
 }
 
