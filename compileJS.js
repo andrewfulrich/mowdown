@@ -27,9 +27,7 @@ async function compileJs(htmlFilePath,destinationFolder,options) {
   const codeFromPaths=getCodeFromPaths(finalPaths,inlineCode,basePath)
   nonLocalPaths.unshift('https://cdn.jsdelivr.net/npm/regenerator-runtime@0.13.3/runtime.min.js')
   const allNonLocalPaths=nonLocalPaths.concat(Object.values(options.replaceJs))
-  console.log('nonLocalPaths are: ',nonLocalPaths)
   const transformed=await concatAndTransform(codeFromPaths)
-  console.log('baseName is:',baseName)
   const returnHtml=replaceCodeInHtml(htmlString,transformed.code,destinationFolder,baseName,allNonLocalPaths)
   return {
     htmlString:returnHtml,
@@ -101,14 +99,12 @@ function sortPaths(htmlString,basePath) {
 
 function getCodeFromPath(uri,inlineCode,basePath) {
   if(uri.includes('///')) {
-    console.log('getting inline',uri)
     const index=parseInt(uri.replace('///',''))
     if(isNaN(index) || inlineCode[index] === undefined) {
       throw new Error('invalid inline script index: '+uri)
     }
     return inlineCode[index]
   } else if(isLocalPath(uri,basePath)) {
-    console.log('getting local:',uri)
     return getLocalCode(uri,basePath)
   } else {
     return ''

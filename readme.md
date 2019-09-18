@@ -9,6 +9,9 @@ So, no need to run a builder every time you make a change and no need to worry a
 If one of your html files refers to a css script in a CDN, add it to the excludeCss and prependCssUrls lists (see below) because otherwise mowdown currently assumes all css files are local
 
 # To use:
+
+First, include a `.babelrc` file in your root folder. You can copy from the one in this package's repo if you want.
+
 ```
 const mowdown = require('mowdown')
 mowDown(arrayOfHtmlFiles,outputFolder)
