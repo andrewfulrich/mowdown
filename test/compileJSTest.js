@@ -39,7 +39,7 @@ test('replaceInArray',t=>{
   t.deepEqual(actual,expected,'should replace the elements in the array with their replacements')
 })
 
-test('getCodeFromPaths',async t=>{
+test('getCodeFromPaths',t=>{
   t.plan(1)
   const paths=[
     'https://cdn.jsdelivr.net/npm/microplugin@0.0.3/src/microplugin.min.js',
@@ -49,7 +49,7 @@ test('getCodeFromPaths',async t=>{
   const inlineCode=[`console.log('inline in body')`]
   const hn1JsCode=fs.readFileSync('test/input/public/hn1.js','utf8')
   try {
-    const actual=await compileJs.getCodeFromPaths(paths,inlineCode,basePath)
+    const actual=compileJs.getCodeFromPaths(paths,inlineCode,basePath)
     const expected=['',hn1JsCode,inlineCode[0]]
     t.deepEqual(actual,expected,'should retrieve code in order specified, and should be able to do it for remote, local, and inline code')
   } catch(e) {

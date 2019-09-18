@@ -24,10 +24,10 @@ async function compileJs(htmlFilePath,destinationFolder,options) {
     .concat(replaceInArray(paths,options.replaceJs))
     .filter(path=>!options.excludeJs.includes(path))
 
-  const codeFromPaths=await getCodeFromPaths(finalPaths,inlineCode,basePath)
+  const codeFromPaths=getCodeFromPaths(finalPaths,inlineCode,basePath)
  
-  const transformed=concatAndTransform(codeFromPaths)
-  const returnHtml=replaceCodeInHtml(htmlString,transformed,destinationFolder,baseName,nonLocalPaths)
+  const transformed=await concatAndTransform(codeFromPaths)
+  const returnHtml=replaceCodeInHtml(htmlString,transformed.code,destinationFolder,baseName,nonLocalPaths)
   return {
     htmlString:returnHtml,
     paths:finalPaths
@@ -96,7 +96,7 @@ function sortPaths(htmlString,basePath) {
   return {paths,inlineCode,nonLocalPaths}
 }
 
-async function getCodeFromPath(uri,inlineCode,basePath) {
+function getCodeFromPath(uri,inlineCode,basePath) {
   if(uri.includes('///')) {
     console.log('getting inline',uri)
     const index=parseInt(uri.replace('///',''))
@@ -112,9 +112,9 @@ async function getCodeFromPath(uri,inlineCode,basePath) {
   }
 }
 
-async function getCodeFromPaths(paths,inlineCode,basePath) {
+function getCodeFromPaths(paths,inlineCode,basePath) {
   try {
-    return await Promise.all(paths.map(p=>getCodeFromPath(p,inlineCode,basePath)))
+    return paths.map(p=>getCodeFromPath(p,inlineCode,basePath))
   } catch(e) {
     throw e
   }
