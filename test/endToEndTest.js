@@ -5,7 +5,7 @@ const path = require('path')
 const rimraf =require('rimraf')
 
 test('end to end test', t=> {
-    t.plan(14)
+    t.plan(10)
     const outputFolder='./test/output'
     const expectedFolder='./test/expected/end2end'
     try {
@@ -61,7 +61,7 @@ test('end to end test', t=> {
 });
 
 test('end to end test with sourceFolder different from html paths',t=> {
-  t.plan(14)
+  t.plan(10)
     const outputFolder='./test/output'
     const expectedFolder='./test/expected/end2end'
     try {

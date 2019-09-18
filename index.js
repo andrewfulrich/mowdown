@@ -48,8 +48,8 @@ async function mowDown(htmlPaths,destinationFolder,options={}) {
   }
   
   //include both "path" and "/path" variants for replacement scripts and excluded scripts
-  realOptions.replaceJs=addPathVariantsToReplacementObj(realOptions.replaceJs)
-  realOptions.replaceCss=addPathVariantsToReplacementObj(realOptions.replaceCss)
+  realOptions.replaceJs=addPathVariants(realOptions.replaceJs)
+  realOptions.replaceCss=addPathVariants(realOptions.replaceCss)
   realOptions.excludeJs=addPathVariantsToArray(realOptions.excludeJs)
   realOptions.excludeCss=addPathVariantsToArray(realOptions.excludeCss)
 
@@ -59,15 +59,15 @@ async function mowDown(htmlPaths,destinationFolder,options={}) {
   //copy everything else over just in case (helpful for things like the fontawesome folder)
   const htmlPathFolder=realOptions.sourceFolder || path.dirname(htmlPaths[0]) //todo: this currently assumes that all the given html files are in the same source folder
 
-  const dontCopyStarterArray=options.sourceFolder===null? []:htmlPaths.map(p=>path.basename(p))
-  const dontCopyThese=dontCopyStarterArray.concat(
+  let dontCopyThese=processedFiles.concat(
+    options.sourceFolder===null? []:htmlPaths.map(p=>path.basename(p)),
     Object.keys(realOptions.replaceJs),
     Object.keys(realOptions.replaceCss),
     realOptions.excludeJs,
     realOptions.excludeCss)
   console.log('processed the following files:',processedFiles)
   console.log(`copying over to ${destinationFolder} all files except for: `,dontCopyThese)
-
+  dontCopyThese=addPathVariantsToArray(dontCopyThese)
   function isInExcludedFolder(testPath) {
     return realOptions.excludeFoldersFromCopy.some(folderName=>testPath.startsWith(folderName))
   }
@@ -82,7 +82,7 @@ function getPathVariant(path) {
   return path[0]=='/' ? path.substring(1) : '/'+path
 }
 
-function addPathVariantsToReplacementObj(replacementObj) {  
+function addPathVariants(replacementObj) {  
   const obj={...replacementObj}
   Object.keys(obj).forEach(path=>
     obj[getPathVariant(path)]=obj[path]

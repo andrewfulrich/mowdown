@@ -1,1 +1,0 @@
-console.log('deferred in head')
