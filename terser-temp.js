@@ -1,6 +1,12 @@
 const Terser = require("terser");
 
 const code=`
+/**
+ * Minified by jsDelivr using UglifyJS v3.3.22.
+ * Original file: /npm/microplugin@0.0.3/src/microplugin.js
+ * 
+ * Do NOT use SRI with dynamically generated files! More information: https://www.jsdelivr.com/using-sri-with-dynamic-files
+ */
 function chart(stuff) {
   const root = pack(data);
   
