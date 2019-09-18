@@ -137,7 +137,7 @@ function replaceCodeInHtml(inputHtml,code,destinationFolder,bundlePrefix,nonLoca
   const filepath=path.join(destinationFolder,filename)
   fs.writeFileSync(filepath,code)
   nonLocalPaths.forEach(path=>$('head').append(`<script src="${path}"></script>`))
-  $('head').append(`<script defer src="${filename}"></script>`)
+  $('head').append(`<script defer src="/${filename}"></script>`)
   return $.html()
 }
 
