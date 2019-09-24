@@ -8,49 +8,131 @@ test('sortPaths',t=>{
   t.plan(1)
   const htmlString=fs.readFileSync('test/input/views/stuff.html','utf8')
   const expectedOrder=[
-    'https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.js',
-    'hn1.js',
-    'hn2.js',
-    'scripts/hn.js',
-    '///0',
-    'https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js',
-    '/hn3.js'
+    {uri:'https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.js',isLocal:false},
+    {uri:'hn1.js',isLocal:true},
+    {uri:'hn2.js',isLocal:true},
+    {uri:'scripts/hn.js',isLocal:true},
+    {code:`console.log('inline in body')`,isLocal:true},
+    {uri:'https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js',isLocal:false},
+    {uri:'/hn3.js',isLocal:true}
   ];
-  const expectedInlineCode=[`console.log('inline in body')`]
   
   const actual=compileJs.sortPaths(htmlString,basePath)
-  t.deepEqual(actual,{
-    paths:expectedOrder,
-    inlineCode:expectedInlineCode,
-    nonLocalPaths:[expectedOrder[0],expectedOrder[5]]
-  },'source paths and code should be ordered correctly')
+  t.deepEqual(actual,expectedOrder,'source paths and code should be ordered correctly')
+})
+
+test('getPaths',t=>{
+  t.plan(1)
+  const htmlString=fs.readFileSync('test/input/views/stuff.html','utf8')
+  const expectedOrder=[
+    {uri:'https://cdn.jsdelivr.net/npm/regenerator-runtime@0.13.3/runtime.min.js',isLocal:false},
+    {uri:'https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.js',isLocal:false},
+    {uri:'hn1.js',isLocal:true},
+    {uri:'hn2.js',isLocal:true},
+    {uri:'scripts/hn.js',isLocal:true},
+    {code:`console.log('inline in body')`,isLocal:true},
+    {uri:'https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js',isLocal:false},
+    {uri:'/hn3.js',isLocal:true}
+  ];
+  
+  const actual=compileJs.getPaths(htmlString,basePath,{replaceJs:{},excludeJs:[],prependJsUrls:[]})
+  t.deepEqual(actual,expectedOrder,'basic usage of getPaths should return expected array of path objects')
+})
+
+test('getPaths with prependJsUrls enties',t=>{
+  t.plan(1)
+  const htmlString=fs.readFileSync('test/input/views/stuff.html','utf8')
+  const prependUrl='www.example.com'
+  const expectedOrder=[
+    {uri:prependUrl,isLocal:false},
+    {uri:'https://cdn.jsdelivr.net/npm/regenerator-runtime@0.13.3/runtime.min.js',isLocal:false},
+    {uri:'https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.js',isLocal:false},
+    {uri:'hn1.js',isLocal:true},
+    {uri:'hn2.js',isLocal:true},
+    {uri:'scripts/hn.js',isLocal:true},
+    {code:`console.log('inline in body')`,isLocal:true},
+    {uri:'https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js',isLocal:false},
+    {uri:'/hn3.js',isLocal:true}
+  ];
+  
+  const actual=compileJs.getPaths(htmlString,basePath,{replaceJs:{},excludeJs:[],prependJsUrls:[prependUrl]})
+  t.deepEqual(actual,expectedOrder,'getPaths should return array of path objects with prepended URL')
+})
+
+test('getPaths with excludeJs enties',t=>{
+  t.plan(1)
+  const htmlString=fs.readFileSync('test/input/views/stuff.html','utf8')
+  const excludeUrl='https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.js'
+  const expectedOrder=[
+    {uri:'https://cdn.jsdelivr.net/npm/regenerator-runtime@0.13.3/runtime.min.js',isLocal:false},
+    {uri:'hn1.js',isLocal:true},
+    {uri:'hn2.js',isLocal:true},
+    {uri:'scripts/hn.js',isLocal:true},
+    {code:`console.log('inline in body')`,isLocal:true},
+    {uri:'https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js',isLocal:false},
+    {uri:'/hn3.js',isLocal:true}
+  ];
+  
+  const actual=compileJs.getPaths(htmlString,basePath,{replaceJs:{},excludeJs:[excludeUrl],prependJsUrls:[]})
+  t.deepEqual(actual,expectedOrder,'getPaths should return array of path objects without excluded URL')
+})
+
+test('getPaths with replaceJs enties',t=>{
+  t.plan(1)
+  const htmlString=fs.readFileSync('test/input/views/stuff.html','utf8')
+  const replacement='www.example.com'
+  const replaceJs={'https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.js':replacement}
+  const expectedOrder=[
+    {uri:'https://cdn.jsdelivr.net/npm/regenerator-runtime@0.13.3/runtime.min.js',isLocal:false},
+    {uri:replacement,isLocal:false},
+    {uri:'hn1.js',isLocal:true},
+    {uri:'hn2.js',isLocal:true},
+    {uri:'scripts/hn.js',isLocal:true},
+    {code:`console.log('inline in body')`,isLocal:true},
+    {uri:'https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js',isLocal:false},
+    {uri:'/hn3.js',isLocal:true}
+  ];
+  
+  const actual=compileJs.getPaths(htmlString,basePath,{replaceJs,excludeJs:[],prependJsUrls:[]})
+  t.deepEqual(actual,expectedOrder,'getPaths should return array of path objects with replaced URL')
 })
 
 test('replaceInArray',t=>{
   t.plan(1)
-  const startingArray=['asdf','fdsa','f','d','s','a']
+  const startingArray=[
+    {uri:'asdf',isLocal:false},
+    {code:'fdsa'},
+    {uri:'f',isLocal:false},
+    {uri:'d',isLocal:true},
+    {uri:'s',isLocal:true},
+    {uri:'a',isLocal:false}]
   const replacements={
     asdf:'qwer',
     d:'t',
     a:'y'
   }
   const actual=compileJs.replaceInArray(startingArray,replacements)
-  const expected=['qwer','fdsa','f','t','s','y']
+  const expected=[
+    {uri:'qwer',isLocal:false},
+    {code:'fdsa'},
+    {uri:'f',isLocal:false},
+    {uri:'t',isLocal:false},
+    {uri:'s',isLocal:true},
+    {uri:'y',isLocal:false}]
   t.deepEqual(actual,expected,'should replace the elements in the array with their replacements')
 })
 
 test('getCodeFromPaths',t=>{
   t.plan(1)
   const paths=[
-    'https://cdn.jsdelivr.net/npm/microplugin@0.0.3/src/microplugin.min.js',
-    'hn1.js',
-    '///0'
+    {uri:'https://cdn.jsdelivr.net/npm/microplugin@0.0.3/src/microplugin.min.js',isLocal:false},
+    {uri:'hn1.js',isLocal:true},
+    {code:`console.log('inline in body')`}
   ]
-  const inlineCode=[`console.log('inline in body')`]
   const hn1JsCode=fs.readFileSync('test/input/public/hn1.js','utf8')
   try {
-    const actual=compileJs.getCodeFromPaths(paths,inlineCode,basePath)
-    const expected=['',hn1JsCode,inlineCode[0]]
+    const actual=compileJs.getCodeFromPaths(paths,basePath)
+    const expected=['',hn1JsCode,paths[2].code]
     t.deepEqual(actual,expected,'should retrieve code in order specified, and should be able to do it for remote, local, and inline code')
   } catch(e) {
     t.fail(e.stack)

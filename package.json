@@ -1,6 +1,6 @@
 {
   "name": "mowdown",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "Minimal production bundler for html, css, and js",
   "main": "index.js",
   "scripts": {
