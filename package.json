@@ -1,6 +1,6 @@
 {
   "name": "mowdown",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "description": "Minimal production bundler for html, css, and js",
   "main": "index.js",
   "scripts": {
@@ -21,14 +21,14 @@
   },
   "homepage": "https://github.com/andrewfulrich/mowdown#readme",
   "dependencies": {
-    "@babel/core": "^7.5.4",
-    "@babel/preset-env": "^7.6.0",
-    "ajv": "^6.10.2",
+    "@babel/core": "^7.10.5",
+    "@babel/preset-env": "^7.10.4",
+    "ajv": "^6.12.3",
     "cheerio": "^1.0.0-rc.3",
-    "clean-css": "^4.2.1",
+    "clean-css": "^4.2.3",
     "htmlclean": "^3.0.8",
     "recursive-copy": "^2.0.10",
-    "terser": "^4.3.1"
+    "terser": "^4.8.0"
   },
   "devDependencies": {
     "rimraf": "^2.6.3",
