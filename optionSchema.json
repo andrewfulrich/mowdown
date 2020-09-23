@@ -47,11 +47,15 @@
         "type":"string"
       }
     },
-    "mangle":{
+    "isUsingBabel":{
       "type":"boolean"
+    },
+    "terserOptions":{
+      "type":"object"
     }
   },
   "required":[
+    "isUsingBabel",
     "sourceFolder",
     "replaceJs",
     "replaceCss",
@@ -60,5 +64,5 @@
     "prependJsUrls",
     "prependCssUrls",
     "excludeFoldersFromCopy",
-    "mangle"]
+    "terserOptions"]
 }

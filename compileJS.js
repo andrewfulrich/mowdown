@@ -1,6 +1,4 @@
-const babelify=require('./babelify')
-
-const Terser = require("terser");
+const { minify } = require("terser");
 const fs=require('fs')
 const path = require('path');
 const cheerio = require('cheerio')
@@ -9,7 +7,7 @@ const cheerio = require('cheerio')
 /**
  * @param string htmlFilePath 
  * @param string destinationFolder 
- * @param object options: sourceFolder, replaceJs, mangle,excludeJs,prependJsUrls
+ * @param object options: sourceFolder, replaceJs, terserOptions,excludeJs,prependJsUrls
  */
 async function compileJs(htmlFilePath,destinationFolder,options) {
   if (!fs.existsSync(destinationFolder)){
@@ -23,7 +21,7 @@ async function compileJs(htmlFilePath,destinationFolder,options) {
 
   const codeFromPaths=getCodeFromPaths(paths,basePath)
 
-  const transformed=await concatAndTransform(codeFromPaths)
+  const transformed=await concatAndTransform(codeFromPaths,options)
   const returnHtml=replaceCodeInHtml(htmlString,transformed.code,destinationFolder,baseName,getAllNonLocals(paths))
   return {
     htmlString:returnHtml,
@@ -143,8 +141,13 @@ function getCodeFromPaths(paths,basePath) {
   }
 }
 
-function concatAndTransform(codeArray) {
-  return babelify(codeArray.join('\n\n'))
+async function concatAndTransform(codeArray,options) {
+  const minified= await minify(codeArray.join('\n\n'),{...options.terserOptions})
+  if(options.isUsingBabel) {
+    const babelify=require('./babelify')
+    return babelify(minified.code)
+  }
+  else return minified.code
 }
 
 function replaceCodeInHtml(inputHtml,code,destinationFolder,bundlePrefix,nonLocalPaths) {

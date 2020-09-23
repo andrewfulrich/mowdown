@@ -147,10 +147,10 @@ test('concatAndTransform',async t=>{
   const hn1JsCode=fs.readFileSync('test/input/public/hn1.js','utf8').replace(/'/g,'"')
   const codeArray=[micropluginCode,hn1JsCode,inlineCode]
   try {
-    const actual=await compileJs.concatAndTransform(codeArray)
+    const actual=await compileJs.concatAndTransform(codeArray,{isUsingBabel:true})
     // fs.writeFileSync('test/expected/microplugin-transformed.min.js',actual.code)
     const transformedMicro=fs.readFileSync('test/expected/microplugin-transformed.min.js','utf8')
-    const expected=[transformedMicro,hn1JsCode+';',inlineCode+';'].join('')
+    const expected=[transformedMicro,hn1JsCode,inlineCode+';'].join(',')
     t.equal(actual.code,expected,'should have concatenated and babel-transformed code')
   } catch(e) {
     console.log(e)
