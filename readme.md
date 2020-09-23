@@ -14,12 +14,12 @@ First, include a `.babelrc` file in your root folder. You can copy from the one 
 
 ```
 const mowdown = require('mowdown')
-mowDown(arrayOfHtmlFiles,outputFolder)
+mowdown(arrayOfHtmlFiles,outputFolder)
 ```
 or if the html files are not in the same folder as the assets they refer to, you can do:
 ```
 const mowdown = require('mowdown')
-mowDown(arrayOfHtmlFiles,outputFolder,{sourceFolder:inputFolder})
+mowdown(arrayOfHtmlFiles,outputFolder,{sourceFolder:inputFolder})
 ```
 That third param takes a few other options as well. Here are the defaults and explanations:
 ```
