@@ -24,6 +24,7 @@ mowdown(arrayOfHtmlFiles,outputFolder,{sourceFolder:inputFolder})
 That third param takes a few other options as well. Here are the defaults and explanations:
 ```
 const defaults={
+  isOverwritingHtml:true, //whether to overwrite the original html files or create a new one in the destination folder
   isUsingBabel:true, //whether to babel-transform the output or not
   sourceFolder:null, //the folder with all the asset files referred to by your html files, if different from the folder containing your html files
   replaceJs:{}, //an object mapping JS script URIs to their desired replacement URIs

@@ -16,13 +16,14 @@ async function processSingleFile(htmlPath,destinationFolder,options) {
   //minify html
   const cleanedHtml=htmlClean(htmlWithCssCompiled.html)
   const htmlFileName=path.basename(htmlPath)
-  fs.writeFileSync(htmlPath,cleanedHtml) //Overwrite the old html
+  fs.writeFileSync(options.isOverwritingHtml? htmlPath : path.join(destinationFolder,htmlFileName),cleanedHtml) //Overwrite the old html
   const processedPaths= htmlWithCssCompiled.scripts.concat(paths)
   processedPaths.push(htmlFileName)
   return processedPaths
 }
 
 const defaults={
+  isOverwritingHtml:true, //whether to overwrite the original html files or create a new one in the destination folder
   isUsingBabel:true, //whether to babel-transform the output or not
   sourceFolder:null, //the folder with all the asset files referred to by your html files, if different from the folder containing your html files
   replaceJs:{}, //an object mapping JS script URIs to their desired replacement URIs

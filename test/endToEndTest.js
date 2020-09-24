@@ -179,3 +179,55 @@ test('end to end test with prepended urls',t=> {
         t.fail(e)
       })
 })
+
+test('end to end test without overwriting the original html files',t=> {
+  t.plan(14)
+    const outputFolder='./test/output'
+    const expectedFolder='./test/expected/end2endNonOverwrite'
+    try {
+      rimraf.sync(outputFolder)
+    } catch(e) {
+      //output dir DNE
+    }
+    fs.mkdirSync(outputFolder)
+    const files=['./test/input/public/stuff.html','./test/input/public/thisToo.html']
+    const file1Contents=fs.readFileSync(files[0],'utf8')
+    const file2Contents=fs.readFileSync(files[1],'utf8')
+ 
+    mowDown(files,outputFolder,{isOverwritingHtml:false})
+      .then(()=>{
+        const filesInOutput=fs.readdirSync(outputFolder)
+        const expectedFiles=fs.readdirSync(expectedFolder)
+        
+        t.deepEqual(filesInOutput,expectedFiles,'output files are all present')
+        t.deepEqual(
+          fs.readdirSync(path.join(outputFolder,'scripts')),
+          fs.readdirSync(path.join(expectedFolder,'scripts')),
+          'output files in subfolder are all present')
+        function getFileContents(dir,file) {
+          return fs.readFileSync(path.join(dir,file),'utf8')
+        }
+        const expectedHtmlString1=fs.readFileSync(files[0].replace('input/public','expected/end2endNonOverwrite'),'utf8')
+        const actualHtmlString1=fs.readFileSync(files[0].replace('input/public','output'),'utf8')
+        const expectedHtmlString2=fs.readFileSync(files[1].replace('input/public','expected/end2endNonOverwrite'),'utf8')
+        const actualHtmlString2=fs.readFileSync(files[1].replace('input/public','output'),'utf8')
+        t.equal(actualHtmlString1,expectedHtmlString1,'first html file should match expected')
+        t.equal(actualHtmlString2,expectedHtmlString2,'second html file should match expected')
+        const fileContents=filesInOutput
+          .filter(filename=>!fs.lstatSync(path.join(outputFolder,filename)).isDirectory())
+          .map(filename=>getFileContents(outputFolder,filename))
+        const expectedContents=expectedFiles
+          .filter(filename=>!fs.lstatSync(path.join(expectedFolder,filename)).isDirectory())
+          .map(filename=>getFileContents(expectedFolder,filename))
+        fileContents.forEach((contents,index)=>{
+          t.equal(contents,expectedContents[index],`file contents of ${expectedFiles[index]} should equal expected contents`)
+        })
+
+        t.equal(file1Contents,fs.readFileSync(files[0],'utf8'),'the first original html file should not have been changed')
+        t.equal(file2Contents,fs.readFileSync(files[1],'utf8'),'the second original html file should not have been changed')
+
+      }).catch(e=>{
+        console.log(e)
+        t.fail(e)
+      })
+});
