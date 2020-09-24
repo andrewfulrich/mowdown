@@ -36,11 +36,11 @@ function getAllNonLocals(pathObjects) {
 function getPaths(htmlString,basePath,options) {
   const prependPaths=options.prependJsUrls
     //need to add regenerator runtime script to handle babel-transformed code that contains generators or async/await
-    .concat('https://cdn.jsdelivr.net/npm/regenerator-runtime@0.13.3/runtime.min.js')
     .map(uri=>({
     uri,
     isLocal:false
   }))
+  if(options.isUsingBabel) prependPaths.push({uri:'https://cdn.jsdelivr.net/npm/regenerator-runtime@0.13.3/runtime.min.js',isLocal:false})
   const paths=prependPaths
     .concat( sortPaths(htmlString,basePath,options.prependJsUrls))
  
@@ -147,7 +147,7 @@ async function concatAndTransform(codeArray,options) {
     const babelify=require('./babelify')
     return babelify(minified.code)
   }
-  else return minified.code
+  else return minified
 }
 
 function replaceCodeInHtml(inputHtml,code,destinationFolder,bundlePrefix,nonLocalPaths) {

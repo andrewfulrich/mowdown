@@ -35,7 +35,7 @@ test('getPaths',t=>{
     {uri:'/hn3.js',isLocal:true}
   ];
   
-  const actual=compileJs.getPaths(htmlString,basePath,{replaceJs:{},excludeJs:[],prependJsUrls:[]})
+  const actual=compileJs.getPaths(htmlString,basePath,{replaceJs:{},excludeJs:[],prependJsUrls:[],isUsingBabel:true})
   t.deepEqual(actual,expectedOrder,'basic usage of getPaths should return expected array of path objects')
 })
 
@@ -55,7 +55,7 @@ test('getPaths with prependJsUrls enties',t=>{
     {uri:'/hn3.js',isLocal:true}
   ];
   
-  const actual=compileJs.getPaths(htmlString,basePath,{replaceJs:{},excludeJs:[],prependJsUrls:[prependUrl]})
+  const actual=compileJs.getPaths(htmlString,basePath,{replaceJs:{},excludeJs:[],prependJsUrls:[prependUrl],isUsingBabel:true})
   t.deepEqual(actual,expectedOrder,'getPaths should return array of path objects with prepended URL')
 })
 
@@ -73,7 +73,7 @@ test('getPaths with excludeJs enties',t=>{
     {uri:'/hn3.js',isLocal:true}
   ];
   
-  const actual=compileJs.getPaths(htmlString,basePath,{replaceJs:{},excludeJs:[excludeUrl],prependJsUrls:[]})
+  const actual=compileJs.getPaths(htmlString,basePath,{replaceJs:{},excludeJs:[excludeUrl],prependJsUrls:[],isUsingBabel:true})
   t.deepEqual(actual,expectedOrder,'getPaths should return array of path objects without excluded URL')
 })
 
@@ -93,7 +93,7 @@ test('getPaths with replaceJs enties',t=>{
     {uri:'/hn3.js',isLocal:true}
   ];
   
-  const actual=compileJs.getPaths(htmlString,basePath,{replaceJs,excludeJs:[],prependJsUrls:[]})
+  const actual=compileJs.getPaths(htmlString,basePath,{replaceJs,excludeJs:[],prependJsUrls:[],isUsingBabel:true})
   t.deepEqual(actual,expectedOrder,'getPaths should return array of path objects with replaced URL')
 })
 
