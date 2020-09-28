@@ -1,6 +1,7 @@
 const test = require('tape');
 const compileJs = require('../compileJS')
 const fs=require('fs')
+const rimraf =require('rimraf')
 
 const basePath='test/input/public'
 
@@ -172,3 +173,36 @@ test('replaceCodeInHtml',t=>{
   t.equal(actual,expected,'html should be the same except all scripts are taken out and bundle is put in')
   t.equal(actualJs,expectedJs,'js bundle should look as expected')
 })
+
+test('compileJs returns a list of processed files, sans replacement scripts',async t=> {
+  t.plan(1)
+  const outputFolder='./test/output'
+  try {
+    rimraf.sync(outputFolder)
+  } catch(e) {
+    //output dir DNE
+  }
+  fs.mkdirSync(outputFolder)
+
+  const defaults={
+    isOverwritingHtml:true, //whether to overwrite the original html files or create a new one in the destination folder
+    isUsingBabel:true, //whether to babel-transform the output or not
+    sourceFolder:null, //the folder with all the asset files referred to by your html files, if different from the folder containing your html files
+    replaceJs:{}, //an object mapping JS script URIs to their desired replacement URIs
+    replaceCss:{}, //an object mapping CSS script URIs to their desired replacement URIs
+    excludeJs:[], //a list of script sources to not include in the final output
+    excludeCss:[], //a list of css script link hrefs to not include in the final output
+    prependJsUrls:[], //a list of script URLs to prepend to the final output
+    prependCssUrls:[], //a list of css URLs to prepend to the final output (for things you'd get from a cdn for prod but locally for local dev)
+    excludeFoldersFromCopy:[], //by default, mowdown copies everything it didn't already touch in the sourcefolder over to the destination folder, just to make sure it got everything needed for the site to run. Use this array of folder paths to exclude folders within the sourcefolder from being copied over
+    terserOptions:{} //any terser.js flags you want to use for when the js code is minified (see https://github.com/terser/terser)
+  }
+  const result=await compileJs.compileJs('./test/input/public/stuff.html',outputFolder,{
+    ...defaults,
+    excludeJs:['hn1.js'],
+    replaceJs:{
+      'hn1.js':'extra.js'
+    }
+  })
+  t.ok(!result.paths.includes('extra.js'),'The list of processed paths should not include the replacement script')
+});

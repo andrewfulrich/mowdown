@@ -23,9 +23,14 @@ async function compileJs(htmlFilePath,destinationFolder,options) {
 
   const transformed=await concatAndTransform(codeFromPaths,options)
   const returnHtml=replaceCodeInHtml(htmlString,transformed.code,destinationFolder,baseName,getAllNonLocals(paths))
+  
+  const replacements=Object.values(options.replaceJs) //be sure to exclude replacement scripts from the return value, as this is a list of processed files that need not be copied over
   return {
     htmlString:returnHtml,
-    paths:paths.filter(p=>p.uri !== undefined).map(p=>p.uri)
+    paths:paths
+    .filter(p=>p.uri !== undefined)
+    .filter(p=>!replacements.includes(p.uri) && !options.excludeJs.includes(p.uri))
+    .map(p=>p.uri)
   }
 }
 
